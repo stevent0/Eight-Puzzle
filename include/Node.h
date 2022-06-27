@@ -1,3 +1,4 @@
+#pragma once
 #include <vector>
 #include <string>
 
@@ -6,12 +7,11 @@ class Node {
         virtual bool isAtGoalState() const = 0;
         virtual std::vector<Node*> applyOperations() = 0;
         virtual double getHeuristicValue() const = 0;
-        virtual double getCost() const { return accumulatedCost; }      
         virtual std::string getState() const = 0;
+        virtual double getCost() const { return accumulatedCost; }      
         void addCost(int cost) { accumulatedCost += cost; }
     private:
         double accumulatedCost = 0;
-        friend class Compare;
 };
 
 struct Compare {

@@ -53,8 +53,15 @@ std::vector<Node*> EightPuzzleNode::applyOperations() {
 }
 
 double EightPuzzleNode::getHeuristicValue() const {
+    switch (heuristic) {
+        case MANHATTAN_DISTANCE: return calcManhattanDistance();
+        case MISPLACED_TILE: return calcMisplacedTiles();
+        case UNIFORM_COST_SEARCH: return 0;
+        default: return calcManhattanDistance();
+    }
+}
 
-
+double EightPuzzleNode::calcManhattanDistance() const {
     std::vector<std::vector<int>> map(10); //key=tile number, value=correct (row, col) for a solved eight puzzle
     double heuristicValue = 0;
     map.at(1) = std::vector<int> {0, 0};
@@ -81,21 +88,26 @@ double EightPuzzleNode::getHeuristicValue() const {
     }
 
     return heuristicValue;
+}
 
-    // int count = 0;
+double EightPuzzleNode::calcMisplacedTiles() const {
+    int count = 0;
 
-    // for (int row = 0; row < state.size(); ++row) {
-    //     for (int col = 0; col < state.at(0).size(); ++col) {
-    //         int n = state.at(row).at(col) - '0';
-    //         int expectedNumber = (3*row + col) + 1;
-    //         if (n != expectedNumber) {
-    //             ++count;
-    //         }
-    //     }
-    // }
+    for (int row = 0; row < state.size(); ++row) {
+        for (int col = 0; col < state.at(0).size(); ++col) {
+            int n = state.at(row).at(col) - '0';
+            int expectedNumber = (3*row + col) + 1;
+            if (n != expectedNumber) {
+                ++count;
+            }
+        }
+    }
 
-    // return count;
+    return count;
+}
 
+void EightPuzzleNode::setHeuristic(Heuristic heuristic) {
+    this->heuristic = heuristic;
 }
 
 std::string EightPuzzleNode::getState() const {

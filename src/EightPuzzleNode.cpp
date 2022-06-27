@@ -1,10 +1,13 @@
 #include "../include/EightPuzzleNode.h"
+#include <stdexcept>
+#include <unordered_set>
+#include <iostream>
 
 EightPuzzleNode::EightPuzzleNode() {
-    state = std::vector<std::vector<char>>(3);
-    state.at(0) = std::vector<char> {'1', '3', '6'};
-    state.at(1) = std::vector<char> {'5', '-', '7'};
-    state.at(2) = std::vector<char> {'4', '8', '2'};
+    state = std::vector<std::vector<char>>(3, std::vector<char>(3));
+    // state.at(0) = std::vector<char> {'1', '3', '6'};
+    // state.at(1) = std::vector<char> {'5', '-', '7'};
+    // state.at(2) = std::vector<char> {'4', '8', '2'};
 
     for (int row = 0; row < state.size(); ++row) {
         for (int col = 0; col < state.at(0).size(); ++col) {
@@ -15,10 +18,11 @@ EightPuzzleNode::EightPuzzleNode() {
     }
 }
 
-EightPuzzleNode::EightPuzzleNode(EightPuzzleNode* node) {
-    this->addCost(node->getCost());
-    state = node->state;
-    blankSpotLocation = node->blankSpotLocation;
+EightPuzzleNode::EightPuzzleNode(const EightPuzzleNode& node) {
+    addCost(node.getCost());
+    state = node.state;
+    blankSpotLocation = node.blankSpotLocation;
+    heuristic = node.heuristic;
 }
 
 bool EightPuzzleNode::isAtGoalState() const {
@@ -36,7 +40,7 @@ bool EightPuzzleNode::isAtGoalState() const {
     return true;
 }
 
-std::vector<Node*> EightPuzzleNode::applyOperations() {
+std::vector<Node*> EightPuzzleNode::applyOperations() const {
 
     EightPuzzleNode* left = operation_shiftHorizontally(-1);
     EightPuzzleNode* right = operation_shiftHorizontally(1);
@@ -54,9 +58,9 @@ std::vector<Node*> EightPuzzleNode::applyOperations() {
 
 double EightPuzzleNode::getHeuristicValue() const {
     switch (heuristic) {
-        case MANHATTAN_DISTANCE: return calcManhattanDistance();
-        case MISPLACED_TILE: return calcMisplacedTiles();
-        case UNIFORM_COST_SEARCH: return 0;
+        case EightPuzzleHeuristic::MANHATTAN_DISTANCE: return calcManhattanDistance();
+        case EightPuzzleHeuristic::MISPLACED_TILE: return calcMisplacedTiles();
+        case EightPuzzleHeuristic::UNIFORM_COST_SEARCH: return 0;
         default: return calcManhattanDistance();
     }
 }
@@ -106,7 +110,7 @@ double EightPuzzleNode::calcMisplacedTiles() const {
     return count;
 }
 
-void EightPuzzleNode::setHeuristic(Heuristic heuristic) {
+void EightPuzzleNode::setHeuristic(EightPuzzleHeuristic heuristic) {
     this->heuristic = heuristic;
 }
 
@@ -122,11 +126,11 @@ std::string EightPuzzleNode::getState() const {
             char tileNum = state.at(row).at(col);
             stateString += std::string(1, tileNum);
             if (col != 2) {
-                stateString += " |";
+                stateString += " | ";
             }
         }
 
-        stateString += "\n";
+        stateString += " |\n";
     }
 
     stateString += "=============\n";
@@ -136,7 +140,7 @@ std::string EightPuzzleNode::getState() const {
 
 }
 
-EightPuzzleNode* EightPuzzleNode::operation_shiftHorizontally(int direction) {
+EightPuzzleNode* EightPuzzleNode::operation_shiftHorizontally(int direction) const {
 
     EightPuzzleNode* nextState = nullptr;
     int blankSpotRowIndex = this->blankSpotLocation.at(0);
@@ -144,7 +148,7 @@ EightPuzzleNode* EightPuzzleNode::operation_shiftHorizontally(int direction) {
 
     if (direction == -1 && blankSpotColIndex-1 >= 0) { //left
 
-        nextState = new EightPuzzleNode(this);
+        nextState = new EightPuzzleNode(*this);
 
         int a = nextState->state.at(blankSpotRowIndex).at(blankSpotColIndex);
         int b = nextState->state.at(blankSpotRowIndex).at(blankSpotColIndex-1);
@@ -157,7 +161,7 @@ EightPuzzleNode* EightPuzzleNode::operation_shiftHorizontally(int direction) {
     }
     else if (direction == 1 &&  blankSpotColIndex+1 < state.at(0).size()) { //right
 
-        nextState = new EightPuzzleNode(this);
+        nextState = new EightPuzzleNode(*this);
 
         int a = nextState->state.at(blankSpotRowIndex).at(blankSpotColIndex);
         int b = nextState->state.at(blankSpotRowIndex).at(blankSpotColIndex+1);
@@ -174,7 +178,7 @@ EightPuzzleNode* EightPuzzleNode::operation_shiftHorizontally(int direction) {
 }
 
 
-EightPuzzleNode* EightPuzzleNode::operation_shiftVertically(int direction) {
+EightPuzzleNode* EightPuzzleNode::operation_shiftVertically(int direction) const {
 
     EightPuzzleNode* nextState = nullptr;
     int blankSpotRowIndex = this->blankSpotLocation.at(0);
@@ -182,7 +186,7 @@ EightPuzzleNode* EightPuzzleNode::operation_shiftVertically(int direction) {
 
     if (direction == 1 && blankSpotRowIndex-1 >= 0 ) { //up
 
-        nextState = new EightPuzzleNode(this);
+        nextState = new EightPuzzleNode(*this);
         int a = nextState->state.at(blankSpotRowIndex).at(blankSpotColIndex);
         int b = nextState->state.at(blankSpotRowIndex-1).at(blankSpotColIndex);
 
@@ -196,7 +200,7 @@ EightPuzzleNode* EightPuzzleNode::operation_shiftVertically(int direction) {
     }
     else if (direction == -1 && blankSpotRowIndex+1 < state.size()) {  //down
 
-        nextState = new EightPuzzleNode(this);
+        nextState = new EightPuzzleNode(*this);
         int a = nextState->state.at(blankSpotRowIndex).at(blankSpotColIndex);
         int b = nextState->state.at(blankSpotRowIndex+1).at(blankSpotColIndex);
 
@@ -210,4 +214,42 @@ EightPuzzleNode* EightPuzzleNode::operation_shiftVertically(int direction) {
 
 
     return nextState;
+}
+
+void EightPuzzleNode::setState(const std::vector<char>& tileNumbers) {
+
+    if (tileNumbers.size() != 9) {
+        throw std::invalid_argument("Invalid state size");
+    }
+
+    std::unordered_set<char> possibleTiles {'1', '2', '3', '4', '5', '6', '7', '8', '-'};
+    std::vector<int> newBlankSpot(2);
+
+    for (int i = 0; i < tileNumbers.size(); ++i) {
+            char tile = tileNumbers.at(i);
+            if (possibleTiles.count(tile) == 0) {
+                throw std::invalid_argument("Invalid tile found at index " + std::string(1, i));
+            }
+            else {
+                possibleTiles.erase(tile);
+            }
+        }
+
+    if (!possibleTiles.empty()) {
+        throw std::invalid_argument("Some tiles are not valid");
+    }
+
+
+    int index = 0;
+
+    for (int row = 0; row < state.size(); ++row) {
+        for (int col = 0; col < state.at(0).size(); ++col) {
+
+            state.at(row).at(col) = tileNumbers.at(index++);
+            if (state.at(row).at(col)  == '-') {
+                blankSpotLocation = std::vector<int> {row, col};
+            } 
+        }
+    }
+
 }

@@ -1,14 +1,17 @@
 #include "../include/Solver.h"
 #include "../include/EightPuzzleNode.h"
+#include <iostream>
+#include <vector>
+#include <string>
+#include <queue>
+#include <unordered_set>
 
 using namespace std;
 
 int main() {
-    Node* node = new EightPuzzleNode();
+    EightPuzzleNode* node = new EightPuzzleNode();
+    node->setState(vector<char> {'1', '2', '3', '4', '5', '6', '-', '7', '8'});
     Solver solver(node);
     solver.search();
-
-    for (Node* node: solver.stateTrace) {
-        cout << node->getState() << endl;
-    }
+    solver.printStateTrace();
 }

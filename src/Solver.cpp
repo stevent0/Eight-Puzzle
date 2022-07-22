@@ -3,7 +3,7 @@
 #include <vector>
 #include <string>
 #include <queue>
-#include <unordered_set>
+#include <stack>
 
 void Solver::search() {
     std::priority_queue<Node*, std::vector<Node*>, Compare> pq;
@@ -13,21 +13,47 @@ void Solver::search() {
     while (!pq.empty()) {
         Node* node = pq.top(); pq.pop();
         if (!node) continue;
-        stateTrace.push_back(node);
-        if (node->isAtGoalState()) return;
+        if (node->isAtGoalState()) {
+            endingNode = node;
+            return;
+        }
         std::vector<Node*> nextNodes = node->applyOperations();
         for (Node* nextNode: nextNodes) {
             std::string stateString = nextNode->getState();
             if (us.count(stateString) == 0) {
                 pq.push(nextNode);
                 us.insert(stateString);
+                um[nextNode] = node;
             }
         }
     }
 }
 
-void Solver::printStateTrace() {
-    for (Node* node : stateTrace) {
-        std::cout << node->getState() << std::endl;
+void Solver::printSolutionPath() {
+
+    std::stack<Node*> solutionPath;
+    Node* currentNode = endingNode;
+
+
+    if (startingNode && currentNode) {
+
+        std::string startingState = startingNode->getState();
+        std::string currentState = currentNode->getState();
+
+        while (startingState != currentState) {
+            solutionPath.push(currentNode);
+            currentNode = um[currentNode];
+            currentState = currentNode->getState();
+        }
+
+        while (!solutionPath.empty()) {
+            std::cout << solutionPath.top()->getState() << std::endl;
+            solutionPath.pop();
+        }
+
+        
+    }
+    else {
+        std::cout << "Solution path does not exist" << std::endl;
     }
 }
